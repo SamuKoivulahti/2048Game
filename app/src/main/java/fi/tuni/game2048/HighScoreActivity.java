@@ -17,8 +17,13 @@ public class HighScoreActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_high_score);
-        String filename = "highscores.txt";
+        String filename = "highscoresGame2048.txt";
         File file = new File(getApplicationContext().getFilesDir(), filename);
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         FileInputStream inputStream;
         String scores = "";
         try {
@@ -37,9 +42,14 @@ public class HighScoreActivity extends AppCompatActivity {
         }
         String[] splitted = scores.split("#");
         String value = "";
-        for (int i = 0; i < splitted.length; i++) {
-            value += (i + 1) + ". " + splitted[i] + "\r\n";
+        if (file.length() != 0) {
+            value += splitted[0] + "\r\n";
+            value += splitted[1] + "\r\n";
+            value += splitted[2] + "\r\n";
+            value += splitted[3] + "\r\n";
+            value += splitted[4] + "\r\n";
         }
+
         TextView t = findViewById(R.id.textView);
         t.setText(value);
     }

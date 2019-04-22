@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
@@ -34,38 +35,70 @@ import java.util.List;
 import java.util.Random;
 
 public class GameActivity extends AppCompatActivity {
-    private final int size = 4;
+    private int size;
+    private int color;
     private List<TextView> blocks;
     public int score;
     private TextView scoreBoard;
     private Animation animation;
-    private String[] animatedBlocks = new String[size*size];
+    private String[] animatedBlocks;
     private boolean end = false;
     TableLayout layout;
+    List<ScoreItem> scoresList;
+    private int mode;
+    private boolean win = false;
+    private boolean informWin = false;
+    private int highscore;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
+        Bundle b = getIntent().getExtras();
+        if (b != null) {
+            mode = b.getInt("mode");
+            setSize(mode);
+            color = b.getInt("color");
+        }
+
+        String filename = "highscoresGame2048.txt";
+        try {
+            File file = new File(getApplicationContext().getFilesDir(), filename);
+            file.createNewFile();
+            if (file.length() == 0) {
+                FileOutputStream outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
+                outputStream.write("0#0#0#0#0".getBytes());
+                outputStream.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            InputStream inputStream = openFileInput(filename);
+            int data = inputStream.read();
+            StringBuilder builder = new StringBuilder();
+            while (data != -1) {
+                char aChar = (char) data;
+                builder.append(aChar);
+                data = inputStream.read();
+            }
+            inputStream.close();
+            String scores = builder.toString();
+            getHighScore(scores);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(color);
+        animatedBlocks = new String[size*size];
         score = 0;
         blocks = new ArrayList<>(size*size);
         createGameGrid();
+        TextView highscoreBoard = findViewById(R.id.HighScoreBoard);
+        highscoreBoard.setText("High Score\r\n" + highscore);
         scoreBoard = findViewById(R.id.scoreBoard);
-        scoreBoard.setText("Score: " + score);
-        String fileContents = scoreCounter();
-        FileOutputStream outputStream;
-
-            try {
-                File file = new File("highscores.txt");
-                outputStream = openFileOutput(file.getName(), Context.MODE_PRIVATE);
-                outputStream.write(fileContents.getBytes());
-                outputStream.close();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+        scoreBoard.setText("Score\r\n" + score);
         layout = findViewById(R.id.tableLayout);
         layout.setOnTouchListener(new OnSwipeTouchListener(GameActivity.this) {
             public void onSwipeTop() {
@@ -103,6 +136,57 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    private void getHighScore(String value) {
+        String[] result = value.split("#");
+        switch (mode) {
+            case 0: {
+                highscore = Integer.parseInt(result[0]);
+                break;
+            }
+            case 1: {
+                highscore = Integer.parseInt(result[1]);
+                break;
+            }
+            case 2: {
+                highscore = Integer.parseInt(result[2]);
+                break;
+            }
+            case 3: {
+                highscore = Integer.parseInt(result[3]);
+                break;
+            }
+            case 4: {
+                highscore = Integer.parseInt(result[4]);
+                break;
+            }
+        }
+    }
+
+    public void setSize(int sizer) {
+        switch (sizer) {
+            case 0: {
+                size = 3;
+                break;
+            }
+            case 1: {
+                size = 4;
+                break;
+            }
+            case 2: {
+                size = 5;
+                break;
+            }
+            case 3: {
+                size = 4;
+                break;
+            }
+            case 4: {
+                size = 4;
+                break;
+            }
+        }
+    }
+
     public void createGameGrid() {
         TableLayout layout = findViewById(R.id.tableLayout);
         TableLayout.LayoutParams layoutParams = new TableLayout.LayoutParams(
@@ -117,11 +201,19 @@ public class GameActivity extends AppCompatActivity {
         for (int i = 0; i < size; i++) {
             TableRow layoutV = new TableRow(this);
             GradientDrawable layoutGD = new GradientDrawable();
-            layoutGD.setColor(0xFFE2E2E2);
+            if (color == 2) {
+                layoutGD.setColor(0xFF7EC0EE);
+            } else {
+                layoutGD.setColor(0xFFE2E2E2);
+            }
             layoutV.setBackground(layoutGD);
             for (int j = 0; j < size; j++) {
                 GradientDrawable gd = new GradientDrawable();
-                gd.setColor(0xFFE2E2E2);
+                if (color == 2) {
+                    gd.setColor(0xFF7EC0EE);
+                } else {
+                    gd.setColor(0xFFE2E2E2);
+                }
                 gd.setCornerRadius(10);
                 gd.setStroke(2, 0xFF000000);
                 TextView block = new TextView(this);
@@ -149,9 +241,18 @@ public class GameActivity extends AppCompatActivity {
             if (block.getText().equals("")) {
                 block.setText(probabilityGenerate());
                 GradientDrawable gd = new GradientDrawable();
-                gd.setColor(generateColor(block.getText().toString()));
+                if (color == 2) {
+                    gd.setColor(generateBlack(block.getText().toString()));
+                } else {
+                    gd.setColor(generateColor(block.getText().toString()));
+                }
                 gd.setStroke(2, 0xFF000000);
                 gd.setCornerRadius(10);
+                if (color == 2) {
+                    block.setTextColor(generateBlack(block.getText().toString()));
+                } else if (color == 1) {
+                    block.setTextColor(generateColor(block.getText().toString()));
+                }
                 block.setBackground(gd);
                 cellCount--;
             }
@@ -172,7 +273,16 @@ public class GameActivity extends AppCompatActivity {
                     String probability = probabilityGenerate();
                     block.setText(probability);
                     GradientDrawable gd = new GradientDrawable();
-                    gd.setColor(generateColor(block.getText().toString()));
+                    if (color == 2) {
+                        gd.setColor(generateBlack(block.getText().toString()));
+                    } else {
+                        gd.setColor(generateColor(block.getText().toString()));
+                    }
+                    if (color == 2) {
+                        block.setTextColor(generateBlack(block.getText().toString()));
+                    } else if (color == 1) {
+                        block.setTextColor(generateColor(block.getText().toString()));
+                    }
                     gd.setStroke(2, 0xFF000000);
                     gd.setCornerRadius(10);
                     block.setBackground(gd);
@@ -246,6 +356,9 @@ public class GameActivity extends AppCompatActivity {
                     } else {
                         value = result.get(j).get(i);
                     }
+                    if (value == 2048 && !informWin) {
+                        win = true;
+                    }
                     GradientDrawable gd = new GradientDrawable();
                     gd.setStroke(2, 0xFF000000);
                     gd.setCornerRadius(10);
@@ -254,11 +367,29 @@ public class GameActivity extends AppCompatActivity {
                         if (animatedBlocks[index] != null) {
                             blocks.get(index).startAnimation(animation);
                         }
-                        gd.setColor(generateColor(blocks.get(index).getText().toString()));
+                        if (color == 2) {
+                            gd.setColor(generateBlack(blocks.get(index).getText().toString()));
+                        } else {
+                            gd.setColor(generateColor(blocks.get(index).getText().toString()));
+                        }
+                        if (color == 2) {
+                            blocks.get(index).setTextColor(generateBlack(blocks.get(index).getText().toString()));
+                        } else if (color == 1) {
+                            blocks.get(index).setTextColor(generateColor(blocks.get(index).getText().toString()));
+                        }
                         blocks.get(index++).setBackground(gd);
                     } else {
                         blocks.get(index).setText("");
-                        gd.setColor(generateColor(blocks.get(index).getText().toString()));
+                        if (color == 2) {
+                            gd.setColor(generateBlack(blocks.get(index).getText().toString()));
+                        } else {
+                            gd.setColor(generateColor(blocks.get(index).getText().toString()));
+                        }
+                        if (color == 2) {
+                            blocks.get(index).setTextColor(generateBlack(blocks.get(index).getText().toString()));
+                        } else if (color == 1) {
+                            blocks.get(index).setTextColor(generateColor(blocks.get(index).getText().toString()));
+                        }
                         blocks.get(index++).setBackground(gd);
                     }
                 }
@@ -270,7 +401,37 @@ public class GameActivity extends AppCompatActivity {
                     gameOverPopup();
                 }
             }
+            if (win && !informWin) {
+                informWin = true;
+                end = true;
+                winPopUp();
+            }
         }
+    }
+
+    private void winPopUp() {
+        LayoutInflater inflater = (LayoutInflater)
+                getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.popup_win, null);
+        // create the popup window
+        final int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = false;
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+        popupView.setAnimation(AnimationUtils.loadAnimation(this, R.anim.popup_appear));
+
+        // show the popup window
+        // which view you pass in doesn't matter, it is only used for the window tolken
+        popupWindow.showAtLocation(layout, Gravity.CENTER, 0, 0);
+        // dismiss the popup window when touched
+        popupView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                end = false;
+                popupWindow.dismiss();
+                return true;
+            }
+        });
     }
 
     private void gameOverPopup() {
@@ -282,6 +443,7 @@ public class GameActivity extends AppCompatActivity {
         int height = LinearLayout.LayoutParams.WRAP_CONTENT;
         boolean focusable = false;
         final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+        popupView.setAnimation(AnimationUtils.loadAnimation(this, R.anim.popup_appear));
 
         // show the popup window
         // which view you pass in doesn't matter, it is only used for the window tolken
@@ -291,7 +453,7 @@ public class GameActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 popupWindow.dismiss();
-                String filename = "highscores.txt";
+                String filename = "highscoresGame2048.txt";
                 File file = new File(getApplicationContext().getFilesDir(), filename);
                 String fileContents = scoreCounter();
                 FileOutputStream outputStream;
@@ -310,10 +472,10 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private String scoreCounter() {
-        String filename = "highscores.txt";
+        String filename = "highscoresGame2048.txt";
         File file = new File(getApplicationContext().getFilesDir(), filename);
         FileInputStream inputStream;
-        String value = "";
+        String scores = "";
         try {
             inputStream = openFileInput(filename);
             int data = inputStream.read();
@@ -324,41 +486,97 @@ public class GameActivity extends AppCompatActivity {
                 data = inputStream.read();
             }
             inputStream.close();
-            value = builder.toString();
+            scores = builder.toString();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        String[] scores = value.split("#");
-        String placeScoreA = "";
-        boolean added = false;
-        for (int i = 0; i < scores.length; i++) {
-            if (scores[i].equals("")) {
-                scores[i] = "0";
+        String[] scoreList = scores.split("#");
+        StringBuilder builder = new StringBuilder();
+        switch (mode) {
+            case 0: {
+                if (Integer.parseInt(scoreList[0]) > score ) {
+                    builder.append(scoreList[0]);
+                } else {
+                    builder.append(score);
+                }
+                builder.append("#");
+                builder.append(scoreList[1]);
+                builder.append("#");
+                builder.append(scoreList[2]);
+                builder.append("#");
+                builder.append(scoreList[3]);
+                builder.append("#");
+                builder.append(scoreList[4]);
+                break;
             }
-            if ((score > Integer.parseInt(scores[i])) && (!added)) {
-                added = true;
-                placeScoreA = scores[i];
-                scores[i] = String.valueOf(score);
-            } else if ((score > Integer.parseInt(scores[i])) && added) {
-                String placeScoreB = placeScoreA;
-                placeScoreA = scores[i];
-                scores[i] = placeScoreB;
+            case 1: {
+                builder.append(scoreList[0]);
+                builder.append("#");
+                if (Integer.parseInt(scoreList[1]) > score ) {
+                    builder.append(scoreList[1]);
+                } else {
+                    builder.append(score);
+                }
+                builder.append("#");
+                builder.append(scoreList[2]);
+                builder.append("#");
+                builder.append(scoreList[3]);
+                builder.append("#");
+                builder.append(scoreList[4]);
+                break;
+            }
+            case 2: {
+                builder.append(scoreList[0]);
+                builder.append("#");
+                builder.append(scoreList[1]);
+                builder.append("#");
+                if (Integer.parseInt(scoreList[2]) > score ) {
+                    builder.append(scoreList[2]);
+                } else {
+                    builder.append(score);
+                }
+                builder.append("#");
+                builder.append(scoreList[3]);
+                builder.append("#");
+                builder.append(scoreList[4]);
+                break;
+            }
+            case 3: {
+                builder.append(scoreList[0]);
+                builder.append("#");
+                builder.append(scoreList[1]);
+                builder.append("#");
+                builder.append(scoreList[2]);
+                builder.append("#");
+                if (Integer.parseInt(scoreList[3]) > score ) {
+                    builder.append(scoreList[3]);
+                } else {
+                    builder.append(score);
+                }
+                builder.append("#");
+                builder.append(scoreList[4]);
+                break;
+            }
+            case 4: {
+                builder.append(scoreList[0]);
+                builder.append("#");
+                builder.append(scoreList[1]);
+                builder.append("#");
+                builder.append(scoreList[2]);
+                builder.append("#");
+                builder.append(scoreList[3]);
+                builder.append("#");
+                if (Integer.parseInt(scoreList[4]) > score ) {
+                    builder.append(scoreList[4]);
+                } else {
+                    builder.append(score);
+                }
+                break;
             }
         }
 
-        String s = "";
-        for (int i = 0; i < scores.length; i++) {
-            if (i == scores.length -1) {
-                s += scores[i];
-            } else {
-                s += scores[i] + "#";
-            }
-        }
-        if (scores.length < 5 && !added) {
-            s += "#" + score;
-        }
-        System.out.println(s);
-        return s;
+        System.out.println(builder.toString());
+        return builder.toString();
     }
 
     private void setNewGameGrid() {
@@ -465,6 +683,89 @@ public class GameActivity extends AppCompatActivity {
         return color;
     }
 
+    private int generateBlack(String value) {
+        int color;
+        switch (value) {
+            case "": {
+                color = 0xFF7EC0EE;
+                break;
+            }
+            case "2": {
+                color = 0xFFFFFFFF;
+                break;
+            }
+            case "4": {
+                color = 0xFFEFEFEF;
+                break;
+            }
+            case "8": {
+                color = 0xFFDFDFDF;
+                break;
+            }
+            case "16": {
+                color = 0xFFCFCFCF;
+                break;
+            }
+            case "32": {
+                color = 0xFFBFBFBF;
+                break;
+            }
+            case "64": {
+                color = 0xFFAFAFAF;
+                break;
+            }
+            case "128": {
+                color = 0xFF9F9F9F;
+                break;
+            }
+            case "256": {
+                color = 0xFF8F8F8F;
+                break;
+            }
+            case "512": {
+                color = 0xFF7F7F7F;
+                break;
+            }
+            case "1024": {
+                color = 0xFF6F6F6F;
+                break;
+            }
+            case "2048": {
+                color = 0xFF5F5F5F;
+                break;
+            }
+            case "4096": {
+                color = 0xFF4F4F4F;
+                break;
+            }
+            case "8192": {
+                color = 0xFF3F3F3F;
+                break;
+            }
+            case "16384": {
+                color = 0xFF2F2F2F;
+                break;
+            }
+            case "32768": {
+                color = 0xFF1F1F1F;
+                break;
+            }
+            case "65536": {
+                color = 0xFF0F0F0F;
+                break;
+            }
+            case "131072": {
+                color = 0xFF000000;
+                break;
+            }
+            default: {
+                color = 0xFFFFFFFF;
+                break;
+            }
+        }
+        return color;
+    }
+
     public boolean checkIfChanged(List<List<Integer>> newList, boolean horizontal) {
         String[] array = new String[size*size];
         String[] existing = new String[size*size];
@@ -557,5 +858,26 @@ public class GameActivity extends AppCompatActivity {
 
     private enum SwipeDirections {
         LEFT, RIGHT, UP, DOWN
+    }
+
+    public class ScoreItem {
+        public String title;
+        public String score;
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getScore() {
+            return score;
+        }
+
+        public void setScore(String score) {
+            this.score = score;
+        }
     }
 }
