@@ -7,6 +7,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+/**
+ * Shows menu for player
+ */
 public class MainActivity extends AppCompatActivity {
     int mode = 1;
     int colorMode = 0;
@@ -26,6 +29,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * starts game
+     * @param v view
+     */
     public void playGame(View v) {
         Intent intent = new Intent(this, GameActivity.class);
         Bundle b = new Bundle();
@@ -35,11 +42,19 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    /**
+     * Shows high score screen
+     * @param v view
+     */
     public void highScores(View v) {
         Intent intent = new Intent(this, HighScoreActivity.class);
         startActivity(intent);
     }
 
+    /**
+     * changes the image of mode
+     * @param v
+     */
     public void left(View v) {
         if (mode > 0) {
             mode--;
@@ -47,6 +62,10 @@ public class MainActivity extends AppCompatActivity {
         pic.setImageResource(setImage());
     }
 
+    /**
+     * changes the image of mode
+     * @param v
+     */
     public void right(View v) {
         if (mode < 4) {
             mode++;
@@ -54,6 +73,10 @@ public class MainActivity extends AppCompatActivity {
         pic.setImageResource(setImage());
     }
 
+    /**
+     * sets Image according to mode
+     * @return mode id
+     */
     private int setImage() {
         switch (mode) {
             case 0: {

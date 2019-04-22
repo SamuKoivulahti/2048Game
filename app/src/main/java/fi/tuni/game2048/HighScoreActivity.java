@@ -11,6 +11,9 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 
+/**
+ * Shows high scores of each game mode
+ */
 public class HighScoreActivity extends AppCompatActivity {
 
     @Override

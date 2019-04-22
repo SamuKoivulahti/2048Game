@@ -34,6 +34,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Controls the game view
+ *
+ */
 public class GameActivity extends AppCompatActivity {
     private int size;
     private int color;
@@ -44,7 +48,6 @@ public class GameActivity extends AppCompatActivity {
     private String[] animatedBlocks;
     private boolean end = false;
     TableLayout layout;
-    List<ScoreItem> scoresList;
     private int mode;
     private boolean win = false;
     private boolean informWin = false;
@@ -136,6 +139,10 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * gets the correct high score to the screen
+     * @param value highscore file content
+     */
     private void getHighScore(String value) {
         String[] result = value.split("#");
         switch (mode) {
@@ -162,6 +169,10 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * sets size of the gameboard
+     * @param sizer size of board
+     */
     public void setSize(int sizer) {
         switch (sizer) {
             case 0: {
@@ -187,6 +198,9 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Creates the gameGrid
+     */
     public void createGameGrid() {
         TableLayout layout = findViewById(R.id.tableLayout);
         TableLayout.LayoutParams layoutParams = new TableLayout.LayoutParams(
@@ -234,6 +248,9 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * sets blocks in random positions in the beginning of the game.
+     */
     public void generateNewRandomBlockBeginning() {
         int cellCount = 2;
         while (cellCount > 0) {
@@ -259,6 +276,9 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     *  generates a new block after every move
+     */
     public void generateNewRandomBlock() {
         int cellCount = 0;
         for (int i = 0; i < blocks.size(); i++) {
@@ -294,14 +314,26 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * generates a random block placement
+     * @return place
+     */
     public int generateRandomValue() {
         return (int)(Math.random()*blocks.size());
     }
 
+    /**
+     * generates random Position
+     * @return
+     */
     public TextView generateRandomPosition() {
         return blocks.get(generateRandomValue());
     }
 
+    /**
+     * returns "2" 9 times out of 10 and, "4" 1 times out of 10
+     * @return value of block
+     */
     public String probabilityGenerate() {
         Random rand = new Random();
         boolean val = rand.nextInt(10)==0;
@@ -312,6 +344,10 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Sets list to rows
+     * @return list of rows
+     */
     public List<List<Integer>> getRows() {
         List<List<Integer>> result = new ArrayList<>();
         for (int i = 0; i < size; i++) {
@@ -329,6 +365,10 @@ public class GameActivity extends AppCompatActivity {
         return result;
     }
 
+    /**
+     * sets list to columns
+     * @return list of columns
+     */
     public List<List<Integer>> getColumns() {
         List<List<Integer>> result = new ArrayList<>();
         for (int i = 0; i < size; i++) {
@@ -345,6 +385,11 @@ public class GameActivity extends AppCompatActivity {
         return result;
     }
 
+    /**
+     * sets new Values to game board
+     * @param result list of columns or rows
+     * @param horizontal if swipe was horizontal
+     */
     public void setNewValues(List<List<Integer>> result, boolean horizontal) {
         int index = 0;
         if (!checkIfChanged(result, horizontal)) {
@@ -409,6 +454,9 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * tells player he has won the game
+     */
     private void winPopUp() {
         LayoutInflater inflater = (LayoutInflater)
                 getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -434,6 +482,9 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * tells player he has lost the game
+     */
     private void gameOverPopup() {
         LayoutInflater inflater = (LayoutInflater)
                 getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -471,6 +522,10 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * writes highscore file
+     * @return
+     */
     private String scoreCounter() {
         String filename = "highscoresGame2048.txt";
         File file = new File(getApplicationContext().getFilesDir(), filename);
@@ -574,11 +629,16 @@ public class GameActivity extends AppCompatActivity {
                 break;
             }
         }
-
+        if (score > highscore) {
+            highscore = score;
+        }
         System.out.println(builder.toString());
         return builder.toString();
     }
 
+    /**
+     * empties game and starts it in the beginning
+     */
     private void setNewGameGrid() {
         GradientDrawable gd = new GradientDrawable();
         gd.setColor(0xFFE2E2E2);
@@ -594,6 +654,9 @@ public class GameActivity extends AppCompatActivity {
         end = false;
     }
 
+    /**
+     * checks if player can make moves
+     */
     private void gameOver() {
         List<List<Integer>> cols = getColumns();
         List<List<Integer>> rows = getRows();
@@ -614,6 +677,10 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * check if empty blocks are left
+     * @return empty blocks
+     */
     private boolean checkEmptyBlocks() {
         boolean hasEmptyBlocks = false;
         for (int i = 0; i < blocks.size(); i++) {
@@ -624,6 +691,11 @@ public class GameActivity extends AppCompatActivity {
         return hasEmptyBlocks;
     }
 
+    /**
+     * generates Color according to value
+     * @param value of block
+     * @return color int
+     */
     private int generateColor(String value) {
         int color;
         switch (value) {
@@ -683,6 +755,11 @@ public class GameActivity extends AppCompatActivity {
         return color;
     }
 
+    /**
+     * generates a color in ff scale
+     * @param value block value
+     * @return color
+     */
     private int generateBlack(String value) {
         int color;
         switch (value) {
@@ -766,6 +843,12 @@ public class GameActivity extends AppCompatActivity {
         return color;
     }
 
+    /**
+     * check if board changed since last move
+     * @param newList list after move
+     * @param horizontal if swipe was horizontal
+     * @return has changed
+     */
     public boolean checkIfChanged(List<List<Integer>> newList, boolean horizontal) {
         String[] array = new String[size*size];
         String[] existing = new String[size*size];
@@ -804,6 +887,12 @@ public class GameActivity extends AppCompatActivity {
         return Arrays.equals(array, existing);
     }
 
+    /**
+     * checks which direction swipe was
+     * @param lines rows or columns
+     * @param reverse left <-> right
+     * @return list of list containing block values
+     */
     public List<List<Integer>> checkDirections(List<List<Integer>> lines, boolean reverse) {
         List<List<Integer>> result = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
@@ -834,6 +923,11 @@ public class GameActivity extends AppCompatActivity {
         return result;
     }
 
+    /**
+     * checks which direction blocks should be added together
+     * @param lines rows or columns of blocks
+     * @param direction which direction did player swipe
+     */
     public void checkSum(List<List<Integer>> lines, SwipeDirections direction) {
         switch (direction) {
             case LEFT: {
@@ -858,26 +952,5 @@ public class GameActivity extends AppCompatActivity {
 
     private enum SwipeDirections {
         LEFT, RIGHT, UP, DOWN
-    }
-
-    public class ScoreItem {
-        public String title;
-        public String score;
-
-        public String getTitle() {
-            return title;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
-        }
-
-        public String getScore() {
-            return score;
-        }
-
-        public void setScore(String score) {
-            this.score = score;
-        }
     }
 }
